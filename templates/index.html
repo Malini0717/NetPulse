@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Stability Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; background: #f5f5f5; padding: 20px; }
+        h2 { text-align: center; }
+        .status {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 22%;
+            text-align: center;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        canvas { background: white; padding: 10px; border-radius: 8px; }
+    </style>
+</head>
+
+<body>
+
+<h2>Live Network Stability Monitor</h2>
+
+<div class="status" id="status">Status: --</div>
+
+<div class="metrics">
+    <div class="box">Latency<br><b><span id="latency">--</span> ms</b></div>
+    <div class="box">Jitter<br><b><span id="jitter">--</span> ms</b></div>
+    <div class="box">Packet Loss<br><b><span id="loss">--</span> %</b></div>
+    <div class="box">Stability Score<br><b><span id="score">--</span></b></div>
+</div>
+
+<canvas id="chart"></canvas>
+
+<script>
+const ctx = document.getElementById("chart").getContext("2d");
+
+const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [
+            { label: "Latency (ms)", data: [], borderColor: "blue", fill: false },
+            { label: "Jitter (ms)", data: [], borderColor: "red", fill: false },
+            { label: "Packet Loss (%)", data: [], borderColor: "black", fill: false }
+        ]
+    },
+    options: {
+        animation: false,
+        scales: {
+            x: { display: false }
+        }
+    }
+});
+
+async function fetchData() {
+    const res = await fetch("/data");
+    const d = await res.json();
+
+    document.getElementById("latency").innerText = d.latency;
+    document.getElementById("jitter").innerText = d.jitter;
+    document.getElementById("loss").innerText = d.packet_loss;
+    document.getElementById("score").innerText = d.score;
+    document.getElementById("status").innerText = "Status: " + d.status;
+
+    chart.data.labels.push("");
+    chart.data.datasets[0].data.push(d.latency);
+    chart.data.datasets[1].data.push(d.jitter);
+    chart.data.datasets[2].data.push(d.packet_loss);
+
+    chart.update();
+}
+
+setInterval(fetchData, 1000);
+</script>
+
+</body>
+</html>
